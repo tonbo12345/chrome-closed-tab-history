@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track and restore closed browser tabs with search, pagination, and history management. Free Chrome extension.">
+    <meta name="keywords" content="chrome extension, closed tabs, tab history, browser tabs, productivity">
+    <meta name="author" content="tonbo12345">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tonbo12345.github.io/chrome-closed-tab-history/">
+    <meta property="og:title" content="Closed Tab History - Chrome Extension">
+    <meta property="og:description" content="Track and restore up to 1,000 closed tabs with search and pagination">
+    <meta property="og:image" content="https://tonbo12345.github.io/chrome-closed-tab-history/screenshots/screenshot-1-main.png">
+
+    <title>Closed Tab History - Chrome Extension</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --text-dark: #202124;
+            --text-light: #5f6368;
+            --bg-light: #f8f9fa;
+            --border-color: #dadce0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1967d2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            margin: 10px;
+            border-radius: 24px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Features */
+        .features {
+            background: var(--bg-light);
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            color: var(--text-dark);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* Screenshots */
+        .screenshots {
+            background: white;
+        }
+
+        .screenshots h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .screenshot-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-item:hover {
+            transform: scale(1.02);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-caption {
+            padding: 15px;
+            background: var(--bg-light);
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Installation */
+        .installation {
+            background: var(--bg-light);
+        }
+
+        .installation h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
+
+        .install-steps {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .install-steps ol {
+            padding-left: 25px;
+        }
+
+        .install-steps li {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-dark);
+        }
+
+        .install-steps code {
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: var(--primary-color);
+        }
+
+        /* Support */
+        .support {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .support h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .support p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+        }
+
+        .footer-links a {
+            margin: 0 15px;
+            color: white;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            .features h2,
+            .screenshots h2,
+            .installation h2,
+            .support h2 {
+                font-size: 2rem;
+            }
+
+            .screenshot-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>🔄 Closed Tab History</h1>
+        <p>Track and restore up to 1,000 closed browser tabs with search and pagination</p>
+        <div>
+            <a href="https://chrome.google.com/webstore" class="btn btn-primary">
+                Add to Chrome
+            </a>
+            <a href="https://github.com/tonbo12345/chrome-closed-tab-history" class="btn btn-secondary">
+                View on GitHub
+            </a>
+        </div>
+    </header>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="container">
+            <h2>✨ Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Track 1,000 Tabs</h3>
+                    <p>Automatically saves up to 1,000 recently closed tabs with timestamps and favicons</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Search Functionality</h3>
+                    <p>Quickly find tabs by title with real-time filtering</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Pagination</h3>
+                    <p>Browse history with customizable items per page (10/20/30)</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Customizable Settings</h3>
+                    <p>Configure max history limit and display preferences</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>One-Click Restore</h3>
+                    <p>Reopen closed tabs instantly with a single click</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>100% Private</h3>
+                    <p>All data stored locally on your device, no tracking</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots -->
+    <section class="screenshots">
+        <div class="container">
+            <h2>📸 Screenshots</h2>
+            <div class="screenshot-grid">
+                <div class="screenshot-item">
+                    <img src="../screenshots/screenshot-1-main.png" alt="Main View">
+                    <div class="screenshot-caption">Main View</div>
+                </div>
+
+                <div class="screenshot-item">
+                    <img src="../screenshots/screenshot-2-search.png" alt="Search Feature">
+                    <div class="screenshot-caption">Search Functionality</div>
+                </div>
+
+                <div class="screenshot-item">
+                    <img src="../screenshots/screenshot-3-settings.png" alt="Settings">
+                    <div class="screenshot-caption">Settings Panel</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation -->
+    <section class="installation">
+        <div class="container">
+            <h2>🚀 Installation</h2>
+            <div class="install-steps">
+                <h3>From Chrome Web Store (Recommended)</h3>
+                <ol>
+                    <li>Visit the <a href="https://chrome.google.com/webstore">Chrome Web Store page</a></li>
+                    <li>Click "Add to Chrome"</li>
+                    <li>Confirm the installation</li>
+                </ol>
+
+                <h3 style="margin-top: 30px;">Manual Installation (Developer Mode)</h3>
+                <ol>
+                    <li>Download or clone the <a href="https://github.com/tonbo12345/chrome-closed-tab-history">GitHub repository</a></li>
+                    <li>Open Chrome and navigate to <code>chrome://extensions/</code></li>
+                    <li>Enable "Developer mode" (toggle in top right)</li>
+                    <li>Click "Load unpacked"</li>
+                    <li>Select the extension directory</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support -->
+    <section class="support">
+        <div class="container">
+            <h2>☕ Support Development</h2>
+            <p>If you find this extension useful, consider supporting the development</p>
+            <a href="https://ko-fi.com/tonbo3751" class="btn btn-primary">
+                Support on Ko-fi
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Closed Tab History. Licensed under MIT License.</p>
+        <div class="footer-links">
+            <a href="https://github.com/tonbo12345/chrome-closed-tab-history">GitHub</a>
+            <a href="https://github.com/tonbo12345/chrome-closed-tab-history/issues">Report Issues</a>
+            <a href="https://ko-fi.com/tonbo3751">Donate</a>
+        </div>
+    </footer>
+</body>
+</html>

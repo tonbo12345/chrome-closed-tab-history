@@ -160,6 +160,16 @@ summary::marker {
   background: #e8f0fe;
 }
 
+/* Version Info in Settings */
+.version-info {
+  display: flex;
+  justify-content: center;
+  padding: 8px 20px;
+  font-size: 11px;
+  color: #80868b;
+  border-top: 1px solid #dadce0;
+}
+
 /* Status */
 .status {
   padding: 16px 20px;

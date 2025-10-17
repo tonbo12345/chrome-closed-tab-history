@@ -330,16 +330,26 @@ summary::marker {
   background: #bdc1c6;
 }
 
+/* Version */
+.version {
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 11px;
+  color: #80868b;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 400px) {
   body {
     min-width: 350px;
   }
-  
+
   .header {
     padding: 12px 16px 8px;
   }
-  
+
   .search-section,
   .history-item {
     padding-left: 16px;

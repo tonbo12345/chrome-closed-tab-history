@@ -122,6 +122,24 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+// Track tab activation to ensure we have current tab info
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  try {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    const existingTab = recentTabs.get(tab.id) || {};
+    recentTabs.set(tab.id, {
+      id: tab.id,
+      url: tab.url || existingTab.url || '',
+      title: tab.title || existingTab.title || tab.url || '',
+      favIconUrl: tab.favIconUrl || existingTab.favIconUrl || '',
+      windowId: tab.windowId
+    });
+    console.log('Tab activated and cached:', tab.id, tab.url);
+  } catch (error) {
+    console.error('Error tracking activated tab:', error);
+  }
+});
+
 // Queue to handle multiple tabs closing simultaneously
 let saveQueue = Promise.resolve();
 

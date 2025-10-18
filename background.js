@@ -74,6 +74,26 @@ async function loadExistingTabs() {
   }
 }
 
+// Refresh all tabs periodically to ensure we don't miss any
+setInterval(async () => {
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      const existingTab = recentTabs.get(tab.id) || {};
+      recentTabs.set(tab.id, {
+        id: tab.id,
+        url: tab.url || existingTab.url || '',
+        title: tab.title || existingTab.title || tab.url || '',
+        favIconUrl: tab.favIconUrl || existingTab.favIconUrl || '',
+        windowId: tab.windowId
+      });
+    }
+    console.log('Refreshed', tabs.length, 'tabs in cache');
+  } catch (error) {
+    console.error('Error refreshing tabs:', error);
+  }
+}, 60000); // Refresh every 60 seconds
+
 // Listen for tab removal events
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   // Don't track tabs closed due to window closure

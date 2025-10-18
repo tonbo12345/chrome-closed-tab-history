@@ -23,3 +23,13 @@ node_modules/
 # Test Profiles
 .test-profile*/
 tests/.test-profile*
+
+# Claude Code specific
+CLAUDE.md
+.claude/
+
+# Test screenshots (debug images)
+tests/*.png
+
+# Build artifacts
+closed-tab-history.zip

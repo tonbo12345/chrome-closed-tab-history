@@ -156,22 +156,30 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
 
   // Queue the save operation to prevent race conditions
   saveQueue = saveQueue.then(async () => {
-    // Get existing history
-    const result = await chrome.storage.local.get(['closedTabs']);
-    let closedTabs = result.closedTabs || [];
+    try {
+      // Get existing history
+      const result = await chrome.storage.local.get(['closedTabs']);
+      let closedTabs = result.closedTabs || [];
 
-    // Add new tab to beginning (most recent first)
-    closedTabs.unshift(closedTab);
+      // Add new tab to beginning (most recent first)
+      closedTabs.unshift(closedTab);
 
-    // Keep only maxHistoryItems
-    if (closedTabs.length > maxHistoryItems) {
-      closedTabs = closedTabs.slice(0, maxHistoryItems);
+      // Keep only maxHistoryItems
+      if (closedTabs.length > maxHistoryItems) {
+        closedTabs = closedTabs.slice(0, maxHistoryItems);
+      }
+
+      // Save updated history
+      await chrome.storage.local.set({ closedTabs });
+
+      console.log('Saved closed tab:', closedTab.title, '(total:', closedTabs.length, ')');
+    } catch (error) {
+      console.error('Error saving closed tab:', error, closedTab);
     }
-
-    // Save updated history
-    await chrome.storage.local.set({ closedTabs });
-
-    console.log('Saved closed tab:', closedTab.title, '(total:', closedTabs.length, ')');
+  }).catch(err => {
+    console.error('Queue error:', err);
+    // Reset queue on error to prevent blocking future saves
+    return Promise.resolve();
   });
 });
 

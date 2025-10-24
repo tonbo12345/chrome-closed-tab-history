@@ -1,4 +1,5 @@
 // Background script for Closed Tab History extension
+// 改善版: Service Worker再起動対応 + フォールバック機構
 
 const DEFAULT_MAX_HISTORY = 1000;
 const ABSOLUTE_MAX_HISTORY = 1000;
@@ -14,7 +15,6 @@ chrome.runtime.onStartup.addListener(async () => {
 
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('Closed Tab History extension installed');
-  // Initialize empty history and default settings if not exists
   const result = await chrome.storage.local.get(['closedTabs', 'settings']);
   if (!result.closedTabs) {
     await chrome.storage.local.set({ closedTabs: [] });
@@ -40,7 +40,6 @@ async function loadSettings() {
       console.log('Loaded max history setting:', maxHistoryItems);
     }
 
-    // Trim existing history if it exceeds current limit
     let closedTabs = result.closedTabs || [];
     if (closedTabs.length > maxHistoryItems) {
       closedTabs = closedTabs.slice(0, maxHistoryItems);
@@ -52,9 +51,50 @@ async function loadSettings() {
   }
 }
 
+// Track tab updates to maintain recent tab information
+const recentTabs = new Map();
+
+// 【改善1】recentTabsを定期的にストレージにバックアップ
+const CACHE_BACKUP_KEY = 'recentTabsBackup';
+const BACKUP_INTERVAL = 10000; // 10秒
+
+// バックアップを読み込む
+async function loadCacheBackup() {
+  try {
+    const result = await chrome.storage.local.get([CACHE_BACKUP_KEY]);
+    if (result[CACHE_BACKUP_KEY]) {
+      const backup = result[CACHE_BACKUP_KEY];
+      console.log('Loading cache backup:', backup.length, 'entries');
+      backup.forEach(tab => {
+        recentTabs.set(tab.id, tab);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading cache backup:', error);
+  }
+}
+
+// バックアップを保存
+async function saveCacheBackup() {
+  try {
+    const backup = Array.from(recentTabs.values());
+    await chrome.storage.local.set({ [CACHE_BACKUP_KEY]: backup });
+    console.log('Saved cache backup:', backup.length, 'entries');
+  } catch (error) {
+    console.error('Error saving cache backup:', error);
+  }
+}
+
+// 定期的にバックアップ
+setInterval(saveCacheBackup, BACKUP_INTERVAL);
+
 // Load all existing tabs into recentTabs cache on startup
 async function loadExistingTabs() {
   try {
+    // まずバックアップから復元
+    await loadCacheBackup();
+
+    // 現在のタブを取得して更新
     const tabs = await chrome.tabs.query({});
     console.log('Loading', tabs.length, 'existing tabs into cache');
 
@@ -74,7 +114,7 @@ async function loadExistingTabs() {
   }
 }
 
-// Refresh all tabs periodically to ensure we don't miss any
+// Refresh all tabs periodically
 setInterval(async () => {
   try {
     const tabs = await chrome.tabs.query({});
@@ -92,25 +132,9 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error refreshing tabs:', error);
   }
-}, 60000); // Refresh every 60 seconds
+}, 60000);
 
-// Listen for tab removal events
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  // Don't track tabs closed due to window closure
-  if (removeInfo.isWindowClosing) {
-    return;
-  }
-  
-  // Get tab info before it's removed
-  // Since the tab is already removed, we need to get the info from onBeforeUnload
-  // But Chrome Extensions API doesn't provide direct access to tab info after removal
-  // We'll use onUpdated to track active tabs and store recent tab info
-});
-
-// Track tab updates to maintain recent tab information
-const recentTabs = new Map();
-
-// Store tab info when created - store minimal info, will be updated later
+// Store tab info when created
 chrome.tabs.onCreated.addListener((tab) => {
   console.log('Tab created:', tab.id, tab.url);
   recentTabs.set(tab.id, {
@@ -125,7 +149,6 @@ chrome.tabs.onCreated.addListener((tab) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   console.log('Tab updated:', tabId, 'changeInfo:', changeInfo);
 
-  // Always update tab info when we have it
   const existingTab = recentTabs.get(tabId) || {};
   recentTabs.set(tabId, {
     id: tabId,
@@ -135,14 +158,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     windowId: tab.windowId
   });
 
-  // Clean up old entries (keep only last 4000 tabs)
   if (recentTabs.size > 4000) {
     const oldestKey = recentTabs.keys().next().value;
     recentTabs.delete(oldestKey);
   }
 });
 
-// Track tab activation to ensure we have current tab info
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
@@ -163,7 +184,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 // Queue to handle multiple tabs closing simultaneously
 let saveQueue = Promise.resolve();
 
-// Better approach: Listen for tab removal and use stored recent tab info
+// 【改善2】フォールバック機構付きの削除ハンドラ
 chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   console.log('Tab removed:', tabId, 'isWindowClosing:', removeInfo.isWindowClosing);
 
@@ -171,20 +192,79 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
     return;
   }
 
-  const tabInfo = recentTabs.get(tabId);
-  console.log('Tab info for removed tab:', tabInfo);
+  let tabInfo = recentTabs.get(tabId);
+  console.log('Tab info from cache:', tabInfo);
 
+  // 【改善3】キャッシュに情報がない場合、バックアップから探す
+  if (!tabInfo || !tabInfo.url || tabInfo.url === '') {
+    console.log('Cache miss, trying backup...');
+    const result = await chrome.storage.local.get([CACHE_BACKUP_KEY]);
+    if (result[CACHE_BACKUP_KEY]) {
+      const backup = result[CACHE_BACKUP_KEY];
+      tabInfo = backup.find(t => t.id === tabId);
+      console.log('Found in backup:', tabInfo);
+    }
+  }
+
+  // 【改善4】それでもダメなら、chrome.tabs.query で探す（削除直後なので見つからないが念のため）
+  if (!tabInfo || !tabInfo.url || tabInfo.url === '') {
+    console.log('Still no info, querying all tabs...');
+    try {
+      const allTabs = await chrome.tabs.query({});
+      const foundTab = allTabs.find(t => t.id === tabId);
+      if (foundTab) {
+        tabInfo = {
+          id: foundTab.id,
+          url: foundTab.url,
+          title: foundTab.title,
+          favIconUrl: foundTab.favIconUrl,
+          windowId: foundTab.windowId
+        };
+        console.log('Found via query:', tabInfo);
+      }
+    } catch (err) {
+      console.error('Query failed:', err);
+    }
+  }
+
+  // 【改善5】最後の手段: chrome.history API（要権限追加）
+  // ※ この機能は manifest.json に "history" 権限が必要
+  /*
+  if (!tabInfo || !tabInfo.url || tabInfo.url === '') {
+    console.log('Trying chrome.history as last resort...');
+    try {
+      const historyItems = await chrome.history.search({
+        text: '',
+        startTime: Date.now() - 5000,
+        maxResults: 1
+      });
+      if (historyItems.length > 0) {
+        tabInfo = {
+          id: tabId,
+          url: historyItems[0].url,
+          title: historyItems[0].title,
+          favIconUrl: `chrome://favicon/${historyItems[0].url}`,
+          windowId: removeInfo.windowId
+        };
+        console.log('Found via history:', tabInfo);
+      }
+    } catch (err) {
+      console.error('History search failed:', err);
+    }
+  }
+  */
+
+  // バリデーション
   if (!tabInfo || !tabInfo.url || tabInfo.url.startsWith('chrome://') || tabInfo.url === 'about:blank' || tabInfo.url === '') {
-    console.log('Skipping tab - no valid URL');
+    console.log('Skipping tab - no valid URL after all attempts');
+    console.log('Final tabInfo:', tabInfo);
     return;
   }
 
-  // Remove from recent tabs
   recentTabs.delete(tabId);
 
-  // Create closed tab entry
   const closedTab = {
-    id: Date.now() + Math.random(), // Unique ID
+    id: Date.now() + Math.random(),
     url: tabInfo.url,
     title: tabInfo.title || tabInfo.url,
     favIconUrl: tabInfo.favIconUrl || '',
@@ -192,22 +272,17 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
     windowId: tabInfo.windowId
   };
 
-  // Queue the save operation to prevent race conditions
   saveQueue = saveQueue.then(async () => {
     try {
-      // Get existing history
       const result = await chrome.storage.local.get(['closedTabs']);
       let closedTabs = result.closedTabs || [];
 
-      // Add new tab to beginning (most recent first)
       closedTabs.unshift(closedTab);
 
-      // Keep only maxHistoryItems
       if (closedTabs.length > maxHistoryItems) {
         closedTabs = closedTabs.slice(0, maxHistoryItems);
       }
 
-      // Save updated history
       await chrome.storage.local.set({ closedTabs });
 
       console.log('Saved closed tab:', closedTab.title, '(total:', closedTabs.length, ')');
@@ -216,18 +291,15 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
     }
   }).catch(err => {
     console.error('Queue error:', err);
-    // Reset queue on error to prevent blocking future saves
     return Promise.resolve();
   });
 });
 
-// Listen for messages from popup to update settings
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'updateMaxHistory') {
     maxHistoryItems = message.maxHistory;
     console.log('Updated max history to:', maxHistoryItems);
 
-    // Trim existing history if needed
     chrome.storage.local.get(['closedTabs'], (result) => {
       let closedTabs = result.closedTabs || [];
       if (closedTabs.length > maxHistoryItems) {
@@ -239,7 +311,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Clean up recent tabs when windows are removed
 chrome.windows.onRemoved.addListener((windowId) => {
   for (const [tabId, tabInfo] of recentTabs.entries()) {
     if (tabInfo.windowId === windowId) {

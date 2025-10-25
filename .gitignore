@@ -33,3 +33,8 @@ tests/*.png
 
 # Build artifacts
 closed-tab-history.zip
+
+# Development backup files
+background-*.js
+*-old.js
+*-improved.js

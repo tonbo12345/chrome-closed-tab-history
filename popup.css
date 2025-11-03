@@ -165,22 +165,22 @@ summary::marker {
   width: 100%;
   padding: 8px 12px;
   background: #fff;
-  border: 1px solid #ea4335;
+  border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 500;
-  color: #ea4335;
+  font-weight: 400;
+  color: #5f6368;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .clear-history-button:hover {
-  background: #fef7f7;
-  border-color: #d33b2c;
+  background: #f8f9fa;
+  border-color: #bdc1c6;
 }
 
 .clear-history-button:active {
-  background: #fce8e6;
+  background: #e8eaed;
 }
 
 /* Version Info in Settings */

@@ -140,28 +140,8 @@ summary::marker {
   padding: 12px 20px;
 }
 
-.support-button {
-  padding: 8px 12px;
-  background: #fff;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 400;
-  color: #5f6368;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.support-button:hover {
-  background: #f8f9fa;
-  border-color: #bdc1c6;
-}
-
-.support-button:active {
-  background: #e8eaed;
-}
-
-/* Clear History Button */
+/* Button Styles (Support & Clear History) */
+.support-button,
 .clear-history-button {
   width: 100%;
   padding: 8px 12px;
@@ -175,11 +155,13 @@ summary::marker {
   transition: all 0.2s;
 }
 
+.support-button:hover,
 .clear-history-button:hover {
   background: #f8f9fa;
   border-color: #bdc1c6;
 }
 
+.support-button:active,
 .clear-history-button:active {
   background: #e8eaed;
 }

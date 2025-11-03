@@ -2,7 +2,7 @@
 // 改善版: Service Worker再起動対応 + フォールバック機構
 
 const DEFAULT_MAX_HISTORY = 1000;
-const ABSOLUTE_MAX_HISTORY = 1000;
+const ABSOLUTE_MAX_HISTORY = 10000;
 
 let maxHistoryItems = DEFAULT_MAX_HISTORY;
 

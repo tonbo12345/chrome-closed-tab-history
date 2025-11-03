@@ -33,9 +33,9 @@
         </div>
         <div class="setting-item">
           <label>
-            Max history:
-            <input type="number" id="maxHistory" min="10" max="1000" value="1000" />
+            Max history: <span id="maxHistoryValue">1000</span>
           </label>
+          <input type="range" id="maxHistorySlider" min="100" max="10000" step="100" value="1000" />
         </div>
         <div class="setting-item">
           <button id="supportButton" class="support-button">

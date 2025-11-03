@@ -11,7 +11,8 @@ let settings = {
 // DOM elements
 let searchInput;
 let displayCountSelect;
-let maxHistoryInput;
+let maxHistorySlider;
+let maxHistoryValue;
 let historyList;
 let statusElement;
 let emptyState;
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initializeElements() {
   searchInput = document.getElementById('searchInput');
   displayCountSelect = document.getElementById('displayCount');
-  maxHistoryInput = document.getElementById('maxHistory');
+  maxHistorySlider = document.getElementById('maxHistorySlider');
+  maxHistoryValue = document.getElementById('maxHistoryValue');
   historyList = document.getElementById('historyList');
   statusElement = document.getElementById('status');
   emptyState = document.getElementById('emptyState');
@@ -51,7 +53,8 @@ async function loadSettings() {
 
     // Apply settings to UI
     displayCountSelect.value = settings.displayCount;
-    maxHistoryInput.value = settings.maxHistory;
+    maxHistorySlider.value = settings.maxHistory;
+    maxHistoryValue.textContent = settings.maxHistory;
   } catch (error) {
     console.error('Error loading settings:', error);
   }
@@ -96,7 +99,7 @@ function setupEventListeners() {
 
   // Settings
   displayCountSelect.addEventListener('change', handleDisplayCountChange);
-  maxHistoryInput.addEventListener('change', handleMaxHistoryChange);
+  maxHistorySlider.addEventListener('input', handleMaxHistoryChange);
 
   // Support button
   const supportButton = document.getElementById('supportButton');
@@ -142,13 +145,12 @@ function handleDisplayCountChange() {
 }
 
 function handleMaxHistoryChange() {
-  let value = parseInt(maxHistoryInput.value);
+  let value = parseInt(maxHistorySlider.value);
 
-  // Validate range
-  if (value < 10) value = 10;
-  if (value > 1000) value = 1000;
+  // Update display
+  maxHistoryValue.textContent = value;
 
-  maxHistoryInput.value = value;
+  // Update settings
   settings.maxHistory = value;
   saveSettings();
 

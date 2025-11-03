@@ -267,9 +267,9 @@ function createHistoryItem(tab) {
     </div>
   `;
 
-  // Add favicon with proper error handling
+  // Add favicon with proper error handling and URL validation
   const faviconContainer = li.querySelector('.favicon-container');
-  if (tab.favIconUrl) {
+  if (tab.favIconUrl && isValidFaviconUrl(tab.favIconUrl)) {
     const img = document.createElement('img');
     img.src = tab.favIconUrl;
     img.alt = '';
@@ -346,6 +346,19 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function isValidFaviconUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
+  // Allow only safe URL schemes
+  return url.startsWith('http://') ||
+         url.startsWith('https://') ||
+         url.startsWith('chrome://') ||
+         url.startsWith('chrome-extension://') ||
+         url.startsWith('data:image/');
 }
 
 async function handleClearHistory() {

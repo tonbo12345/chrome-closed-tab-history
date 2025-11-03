@@ -160,6 +160,29 @@ summary::marker {
   background: #e8f0fe;
 }
 
+/* Clear History Button */
+.clear-history-button {
+  width: 100%;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #ea4335;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ea4335;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-history-button:hover {
+  background: #fef7f7;
+  border-color: #d33b2c;
+}
+
+.clear-history-button:active {
+  background: #fce8e6;
+}
+
 /* Version Info in Settings */
 .version-info {
   display: flex;

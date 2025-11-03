@@ -106,6 +106,12 @@ function setupEventListeners() {
     });
   }
 
+  // Clear history button
+  const clearHistoryButton = document.getElementById('clearHistoryButton');
+  if (clearHistoryButton) {
+    clearHistoryButton.addEventListener('click', handleClearHistory);
+  }
+
   // Pagination
   if (prevButton && nextButton) {
     prevButton.addEventListener('click', handlePrevPage);
@@ -338,4 +344,36 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+async function handleClearHistory() {
+  // Show confirmation dialog
+  const confirmed = confirm(
+    'Are you sure you want to clear all history?\n\n' +
+    `This will permanently delete ${allClosedTabs.length} closed tab${allClosedTabs.length !== 1 ? 's' : ''} from the history.\n\n` +
+    'This action cannot be undone.'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    // Clear from storage
+    await chrome.storage.local.set({ closedTabs: [] });
+
+    // Update local state
+    allClosedTabs = [];
+    filteredTabs = [];
+    currentPage = 1;
+
+    // Update UI
+    updateTotalCount();
+    updateDisplay();
+
+    console.log('History cleared successfully');
+  } catch (error) {
+    console.error('Error clearing history:', error);
+    alert('Failed to clear history. Please try again.');
+  }
 }

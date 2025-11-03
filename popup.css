@@ -141,23 +141,24 @@ summary::marker {
 }
 
 .support-button {
-  padding: 6px 12px;
+  padding: 8px 12px;
   background: #fff;
-  border: 1px solid #1a73e8;
+  border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 500;
-  color: #1a73e8;
+  font-weight: 400;
+  color: #5f6368;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .support-button:hover {
   background: #f8f9fa;
+  border-color: #bdc1c6;
 }
 
 .support-button:active {
-  background: #e8f0fe;
+  background: #e8eaed;
 }
 
 /* Clear History Button */

@@ -255,7 +255,11 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   */
 
   // バリデーション
-  if (!tabInfo || !tabInfo.url || tabInfo.url.startsWith('chrome://') || tabInfo.url === 'about:blank' || tabInfo.url === '') {
+  if (!tabInfo || !tabInfo.url ||
+      tabInfo.url.startsWith('chrome://') ||
+      tabInfo.url.startsWith('about:') ||
+      tabInfo.url.startsWith('data:') ||
+      tabInfo.url === '') {
     console.log('Skipping tab - no valid URL after all attempts');
     console.log('Final tabInfo:', tabInfo);
     return;

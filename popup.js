@@ -324,18 +324,26 @@ function formatTimeAgo(timestamp) {
 }
 
 function shortenUrl(url) {
+  // Handle special URL schemes
+  if (url.startsWith('data:')) {
+    return '[Data URI]';
+  }
+  if (url.startsWith('about:')) {
+    return url; // about:blank, etc.
+  }
+
   try {
     const urlObj = new URL(url);
     let shortened = urlObj.hostname;
-    
+
     if (urlObj.pathname !== '/') {
       shortened += urlObj.pathname;
     }
-    
+
     if (shortened.length > 50) {
       shortened = shortened.substring(0, 47) + '...';
     }
-    
+
     return shortened;
   } catch {
     return url.length > 50 ? url.substring(0, 47) + '...' : url;
